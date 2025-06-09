@@ -3,9 +3,13 @@ const nextConfig = {
   swcMinify: true,
   // Silence warnings
   // https://github.com/WalletConnect/walletconnect-monorepo/issues/1908
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
 
+    // Temporarily disable minification to fix HeartbeatWorker.js issue
+    if (!isServer) {
+      config.optimization.minimize = false;
+    }
     return config;
   },
 };
