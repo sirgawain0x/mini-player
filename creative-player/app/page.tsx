@@ -23,20 +23,76 @@ import { Button } from "./components/ui/Button";
 import { Icon } from "./components/ui/Icon";
 import { Home } from "./components/music/Home";
 import { Features } from "./components/music/Features";
+import { handleSplashScreen } from "./utils/farcaster";
+
+// Loading skeleton component
+function LoadingSkeleton() {
+  return (
+    <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
+      <div className="w-full max-w-md mx-auto px-4 py-3">
+        <header className="flex justify-between items-center mb-3 h-11">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+            <div className="w-24 h-4 bg-gray-300 rounded animate-pulse"></div>
+          </div>
+          <div className="w-20 h-8 bg-gray-300 rounded animate-pulse"></div>
+        </header>
+
+        <main className="flex-1 space-y-6">
+          <div className="bg-white/50 rounded-lg p-4 space-y-3">
+            <div className="w-3/4 h-6 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-full h-4 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-5/6 h-4 bg-gray-300 rounded animate-pulse"></div>
+            <div className="flex gap-3 mt-4">
+              <div className="w-32 h-10 bg-gray-300 rounded animate-pulse"></div>
+              <div className="w-28 h-10 bg-gray-300 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          <div className="bg-white/50 rounded-lg p-4 space-y-3">
+            <div className="w-1/2 h-5 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-full h-32 bg-gray-300 rounded animate-pulse"></div>
+          </div>
+        </main>
+
+        <footer className="mt-2 pt-4 flex justify-center">
+          <div className="w-48 h-4 bg-gray-300 rounded animate-pulse"></div>
+        </footer>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const { setFrameReady, isFrameReady, context } = useMiniKit();
+  const { context } = useMiniKit();
   const [frameAdded, setFrameAdded] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [isFrameReady, setIsFrameReady] = useState(false);
 
   const addFrame = useAddFrame();
   const openUrl = useOpenUrl();
 
+  // Handle Farcaster splash screen dismissal
   useEffect(() => {
-    if (!isFrameReady) {
-      setFrameReady();
-    }
-  }, [setFrameReady, isFrameReady]);
+    const initializeApp = async () => {
+      try {
+        // Initialize Farcaster frame and dismiss splash screen
+        const success = await handleSplashScreen({
+          disableNativeGestures: false, // Set to true if your app has conflicting gestures
+          delay: 100, // Small delay to ensure content is rendered
+        });
+
+        if (success) {
+          setIsFrameReady(true);
+        }
+      } catch (error) {
+        console.error("Failed to initialize Farcaster frame:", error);
+        setIsFrameReady(true); // Fallback to show content anyway
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   const handleAddFrame = useCallback(async () => {
     const frameAdded = await addFrame();
@@ -69,6 +125,11 @@ export default function App() {
 
     return null;
   }, [context, frameAdded, handleAddFrame]);
+
+  // Show loading skeleton until app is ready
+  if (!isFrameReady) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
