@@ -14,10 +14,7 @@ export async function POST(request: Request) {
     });
 
     if (result.state === "error") {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
@@ -26,7 +23,7 @@ export async function POST(request: Request) {
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }

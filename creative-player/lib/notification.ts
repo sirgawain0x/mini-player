@@ -9,20 +9,20 @@ function getUserNotificationDetailsKey(fid: number): string {
 }
 
 export async function getUserNotificationDetails(
-  fid: number,
+  fid: number
 ): Promise<FrameNotificationDetails | null> {
   if (!redis) {
     return null;
   }
 
   return await redis.get<FrameNotificationDetails>(
-    getUserNotificationDetailsKey(fid),
+    getUserNotificationDetailsKey(fid)
   );
 }
 
 export async function setUserNotificationDetails(
   fid: number,
-  notificationDetails: FrameNotificationDetails,
+  notificationDetails: FrameNotificationDetails
 ): Promise<void> {
   if (!redis) {
     return;
@@ -32,7 +32,7 @@ export async function setUserNotificationDetails(
 }
 
 export async function deleteUserNotificationDetails(
-  fid: number,
+  fid: number
 ): Promise<void> {
   if (!redis) {
     return;

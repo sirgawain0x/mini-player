@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   useMiniKit,
   useAddFrame,
@@ -18,11 +19,10 @@ import {
   WalletDropdown,
   WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { Button } from "./components/DemoComponents";
-import { Icon } from "./components/DemoComponents";
-import { Home } from "./components/DemoComponents";
-import { Features } from "./components/DemoComponents";
+import { Button } from "./components/ui/Button";
+import { Icon } from "./components/ui/Icon";
+import { Home } from "./components/music/Home";
+import { Features } from "./components/music/Features";
 
 export default function App() {
   const { setFrameReady, isFrameReady, context } = useMiniKit();

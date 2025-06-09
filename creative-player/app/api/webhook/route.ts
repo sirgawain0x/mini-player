@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   if (!valid) {
     return Response.json(
       { success: false, error: "Invalid FID ownership" },
-      { status: 401 },
+      { status: 401 }
     );
   }
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       console.log(
         "frame_added",
         "event.notificationDetails",
-        event.notificationDetails,
+        event.notificationDetails
       );
       if (event.notificationDetails) {
         await setUserNotificationDetails(fid, event.notificationDetails);
