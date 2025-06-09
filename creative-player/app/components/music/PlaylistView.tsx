@@ -1,6 +1,7 @@
 "use client";
 import { Playlist, Song } from "@/types/music";
 import { Card } from "../ui/Card";
+import Image from "next/image";
 
 export function PlaylistView({
   playlist,
@@ -12,9 +13,11 @@ export function PlaylistView({
   return (
     <Card title={playlist.name || "Your Playlist"}>
       {playlist.coverImage && (
-        <img
+        <Image
           src={playlist.coverImage}
           alt="Playlist cover"
+          width={128}
+          height={128}
           className="w-32 h-32 object-cover rounded mb-4"
         />
       )}
@@ -40,9 +43,11 @@ export function PlaylistView({
         <ul className="space-y-3">
           {songs.map((song) => (
             <li key={song.id} className="flex items-center gap-3 border-b pb-2">
-              <img
+              <Image
                 src={song.cover}
                 alt={song.title}
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded object-cover"
               />
               <div className="flex-1">

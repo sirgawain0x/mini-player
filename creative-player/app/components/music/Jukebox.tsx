@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
+import Image from "next/image";
 import {
   Transaction,
   TransactionButton,
@@ -202,9 +203,11 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
                 className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${selectedSong?.id === song.id ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]" : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"}`}
                 onClick={() => handleSelectSong(song)}
               >
-                <img
+                <Image
                   src={song.cover}
                   alt={song.title}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-lg object-cover mr-4"
                 />
                 <div className="flex-1">

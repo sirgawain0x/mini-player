@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import confetti from "canvas-confetti";
+import Image from "next/image";
 import { Playlist } from "@/types/music";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -247,9 +248,11 @@ export function PlaylistSection({
         </label>
         {coverImage && (
           <div className="mb-2">
-            <img
+            <Image
               src={coverImage}
               alt="Playlist cover"
+              width={128}
+              height={128}
               className="w-32 h-32 object-cover rounded"
             />
           </div>
