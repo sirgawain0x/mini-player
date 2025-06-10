@@ -19,6 +19,7 @@ export function PlaylistView({
           width={128}
           height={128}
           className="w-32 h-32 object-cover rounded mb-4"
+          priority
         />
       )}
       <div className="mb-2 text-[var(--app-foreground-muted)]">
@@ -49,6 +50,7 @@ export function PlaylistView({
                 width={48}
                 height={48}
                 className="w-12 h-12 rounded object-cover"
+                priority
               />
               <div className="flex-1">
                 <div className="font-medium flex items-center gap-2">

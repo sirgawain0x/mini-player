@@ -6,6 +6,7 @@ export type Song = {
   creatorAddress: string;
   audioUrl: string;
   playCount: number;
+  platformName?: string;
 };
 
 export type Playlist = {

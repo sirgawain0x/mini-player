@@ -4,7 +4,17 @@ import { livepeer } from "@/lib/livepeer";
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, height, width, model_id = "" } = await req.json();
+    const {
+      prompt,
+      height,
+      width,
+      model_id = "",
+      guidanceScale,
+      negativePrompt,
+      safetyCheck,
+      numInferenceSteps,
+      numImagesPerPrompt,
+    } = await req.json();
 
     if (!prompt) {
       return NextResponse.json(
@@ -28,11 +38,12 @@ export async function POST(req: NextRequest) {
       prompt,
       height: height || 576,
       width: width || 1024,
-      guidanceScale: 7.5,
-      numInferenceSteps: 20,
+      guidanceScale: guidanceScale ?? 7.5,
+      numInferenceSteps: numInferenceSteps ?? 20,
       modelId: model_id || "",
-      safetyCheck: true,
-      numImagesPerPrompt: 1,
+      safetyCheck: safetyCheck ?? true,
+      numImagesPerPrompt: numImagesPerPrompt ?? 1,
+      ...(negativePrompt && { negativePrompt }),
     });
 
     console.log("Livepeer response:", JSON.stringify(response, null, 2));

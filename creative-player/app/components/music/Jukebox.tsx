@@ -19,6 +19,7 @@ import { useNotification } from "@coinbase/onchainkit/minikit";
 import { Song } from "@/types/music";
 import { Card } from "../ui/Card";
 import { Icon } from "../ui/Icon";
+import { Pills } from "../ui/Pills";
 
 type JukeboxProps = {
   onSongTipped: (song: Song) => void;
@@ -30,125 +31,311 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState("TRENDING");
+  const [after, setAfter] = useState<string | null>(null);
+  const [before, setBefore] = useState<string | null>(null);
+  const [direction, setDirection] = useState<"forward" | "backward">("forward");
+  const [pageInfo, setPageInfo] = useState<{
+    endCursor: string | null;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+  }>({
+    endCursor: null,
+    hasNextPage: false,
+    hasPreviousPage: false,
+    startCursor: null,
+  });
   const { address } = useAccount();
   const sendNotification = useNotification();
   const minTipEth = BigInt(Math.floor(0.00001429 * 1e18));
 
+  const sortOptions = [
+    { label: "🔥 Trending", value: "TRENDING" },
+    { label: "🆕 Newest", value: "CREATED_AT_TIME_DESC" },
+  ];
+
+  const handleSortChange = (newSort: string) => {
+    setSortBy(newSort);
+    setAfter(null);
+    setBefore(null);
+    setDirection("forward");
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch("https://api.spinamp.xyz/v3/graphql", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `{
-          allTrendingTracks(first: 10) {
-            edges {
-              node {
-                processedTrackByTrackId {
+
+    // Different queries for different sort types
+    let query = "";
+    let dataPath = "";
+    const variables: Record<string, unknown> = {};
+    if (sortBy === "TRENDING") {
+      if (direction === "forward") {
+        variables.first = 10;
+        if (after) variables.after = after;
+      } else {
+        variables.last = 10;
+        if (before) variables.before = before;
+      }
+      query = `query TrendingTracks($first: Int, $last: Int, $after: Cursor, $before: Cursor) {
+        allTrendingTracks(first: $first, last: $last, after: $after, before: $before) {
+          edges {
+            cursor
+            node {
+              processedTrackByTrackId {
+                id
+                createdAtTime
+                createdAtBlockNumber
+                title
+                slug
+                platformInternalId
+                lossyAudioIpfsHash
+                lossyAudioUrl
+                description
+                lossyArtworkIpfsHash
+                lossyArtworkUrl
+                websiteUrl
+                platformId
+                artistId
+                supportingArtist
+                insertionId
+                phasesUpdatedAtBlock
+                chorusStart
+                duration
+                lossyAudioMimeType
+                lossyArtworkMimeType
+                mintStart
+                artistByArtistId {
                   id
                   createdAtTime
                   createdAtBlockNumber
-                  title
                   slug
-                  platformInternalId
-                  lossyAudioIpfsHash
-                  lossyAudioUrl
+                  userId
+                  avatarUrl
+                  name
+                  avatarIpfsHash
                   description
-                  lossyArtworkIpfsHash
-                  lossyArtworkUrl
-                  websiteUrl
-                  platformId
-                  artistId
-                  supportingArtist
-                  insertionId
-                  phasesUpdatedAtBlock
-                  chorusStart
-                  duration
-                  lossyAudioMimeType
-                  lossyArtworkMimeType
-                  mintStart
-                  artistByArtistId {
-                      id
-                      createdAtTime
-                      createdAtBlockNumber
-                      slug
-                      userId
-                      avatarUrl
-                      name
-                      avatarIpfsHash
-                      description
-                      customTheme
-                      predefinedThemeName
-                    }
-                  platformByPlatformId {
+                  customTheme
+                  predefinedThemeName
+                }
+                platformByPlatformId {
+                  id
+                  type
+                  name
+                }
+                artistBySupportingArtist {
+                  id
+                  createdAtTime
+                  createdAtBlockNumber
+                  slug
+                  userId
+                  description
+                  customTheme
+                  predefinedThemeName
+                  name
+                  avatarIpfsHash
+                  avatarUrl
+                  userByUserId {
                     id
-                    type
+                    avatarUrl
                     name
-                  }
-                  artistBySupportingArtist {
-                    id
-                    createdAtTime
-                    createdAtBlockNumber
-                    slug
-                    userId
+                    avatarIpfsHash
                     description
                     customTheme
                     predefinedThemeName
-                    name
-                    avatarIpfsHash
-                    avatarUrl
-                    userByUserId {
-                      id
-                      avatarUrl
-                      name
-                      avatarIpfsHash
-                      description
-                      customTheme
-                      predefinedThemeName
-                      metadata
-                    }
+                    metadata
                   }
                 }
               }
             }
           }
-        }`,
-      }),
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+        }
+      }`;
+      dataPath = "allTrendingTracks";
+    } else {
+      if (direction === "forward") {
+        variables.first = 10;
+        if (after) variables.after = after;
+      } else {
+        variables.last = 10;
+        if (before) variables.before = before;
+      }
+      variables.orderBy = [sortBy, "ID_DESC"];
+      query = `query ProcessedTracks($first: Int, $last: Int, $after: Cursor, $before: Cursor, $orderBy: [ProcessedTracksOrderBy!]) {
+        allProcessedTracks(first: $first, last: $last, after: $after, before: $before, orderBy: $orderBy) {
+          edges {
+            cursor
+            node {
+              id
+              createdAtTime
+              createdAtBlockNumber
+              title
+              slug
+              platformInternalId
+              lossyAudioIpfsHash
+              lossyAudioUrl
+              description
+              lossyArtworkIpfsHash
+              lossyArtworkUrl
+              websiteUrl
+              platformId
+              artistId
+              supportingArtist
+              insertionId
+              phasesUpdatedAtBlock
+              chorusStart
+              duration
+              lossyAudioMimeType
+              lossyArtworkMimeType
+              mintStart
+              artistByArtistId {
+                id
+                createdAtTime
+                createdAtBlockNumber
+                slug
+                userId
+                avatarUrl
+                name
+                avatarIpfsHash
+                description
+                customTheme
+                predefinedThemeName
+              }
+              platformByPlatformId {
+                id
+                type
+                name
+              }
+              artistBySupportingArtist {
+                id
+                createdAtTime
+                createdAtBlockNumber
+                slug
+                userId
+                description
+                customTheme
+                predefinedThemeName
+                name
+                avatarIpfsHash
+                avatarUrl
+                userByUserId {
+                  id
+                  avatarUrl
+                  name
+                  avatarIpfsHash
+                  description
+                  customTheme
+                  predefinedThemeName
+                  metadata
+                }
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+        }
+      }`;
+      dataPath = "allProcessedTracks";
+    }
+
+    fetch("https://api.spinamp.xyz/v3/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
     })
       .then((res) => res.json())
       .then((data) => {
-        const edges = data?.data?.allTrendingTracks?.edges || [];
-        type TrendingTrackEdge = {
-          node: {
-            processedTrackByTrackId: {
-              id: string;
-              title: string;
-              lossyAudioUrl?: string;
-              lossyArtworkUrl?: string;
-              artistByArtistId?: {
-                name?: string;
-              };
-            } | null;
-            trendingScore: number;
+        if (data.errors) {
+          setError(
+            data.errors[0]?.message.includes("timeout")
+              ? "The server took too long to respond. Please try again later or reduce the number of tracks."
+              : `GraphQL Error: ${data.errors[0]?.message || "Unknown error"}`
+          );
+          setLoading(false);
+          return;
+        }
+        const connection = data?.data?.[dataPath] || {};
+        const edges: Edge[] = connection.edges || [];
+        const pageInfo = connection.pageInfo || {};
+        setPageInfo({
+          endCursor: pageInfo.endCursor || null,
+          hasNextPage: !!pageInfo.hasNextPage,
+          hasPreviousPage: !!pageInfo.hasPreviousPage,
+          startCursor: pageInfo.startCursor || null,
+        });
+
+        if (!Array.isArray(edges) || edges.length === 0) {
+          console.error("No edges returned for", sortBy, data);
+        }
+
+        type TrackNode = {
+          processedTrackByTrackId?: {
+            id: string;
+            title: string;
+            lossyAudioUrl?: string;
+            lossyArtworkUrl?: string;
+            artistId?: string;
+            artistByArtistId?: {
+              name?: string;
+            };
+            platformByPlatformId?: {
+              name?: string;
+            };
+          };
+          id?: string;
+          title?: string;
+          lossyAudioUrl?: string;
+          lossyArtworkUrl?: string;
+          artistId?: string;
+          artistByArtistId?: {
+            name?: string;
+          };
+          platformByPlatformId?: {
+            name?: string;
           };
         };
-        const mappedSongs: Song[] = (edges as TrendingTrackEdge[])
-          .map((edge) => {
-            const track = edge.node.processedTrackByTrackId;
-            return track
-              ? {
-                  id: track?.id,
-                  title: track?.title,
-                  artist: track?.artistByArtistId?.name || "Unknown Artist",
-                  cover: track?.lossyArtworkUrl || "",
-                  creatorAddress: "",
-                  audioUrl: track.lossyAudioUrl || "",
-                  playCount: 0,
-                }
-              : null;
+        type Edge = {
+          node: TrackNode;
+        };
+
+        const mappedSongs: Song[] = edges
+          .map((edge: Edge) => {
+            // Support both node structures
+            let track: TrackNode["processedTrackByTrackId"] | TrackNode | null =
+              null;
+            let artistId: string | undefined;
+            if (sortBy === "TRENDING") {
+              track = edge.node.processedTrackByTrackId;
+              artistId = edge.node.processedTrackByTrackId?.artistId;
+            } else {
+              track = edge.node;
+              artistId = edge.node.artistId;
+            }
+            if (!track) return null;
+            return {
+              id: track.id || "unknown-id",
+              title: track.title || "Untitled",
+              artist: track.artistByArtistId?.name || "Unknown Artist",
+              cover: track.lossyArtworkUrl || "",
+              creatorAddress: artistId?.split("/")[1] || "",
+              audioUrl: track.lossyAudioUrl || "",
+              playCount: 0,
+              platformName: track.platformByPlatformId?.name || undefined,
+            };
           })
           .filter(Boolean) as Song[];
+
         setSongs(mappedSongs);
         setLoading(false);
       })
@@ -156,7 +343,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         setError("Failed to load songs from Spinamp.");
         setLoading(false);
       });
-  }, []);
+  }, [sortBy, after, before, direction]);
 
   const calls = useMemo(
     () =>
@@ -191,39 +378,104 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
   return (
     <Card title=" Discover Music">
       <div className="space-y-4">
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-[var(--app-foreground-muted)]">
+            Sort by:
+          </div>
+          <Pills
+            options={sortOptions}
+            value={sortBy}
+            onChange={handleSortChange}
+          />
+        </div>
         {loading ? (
-          <div>Loading songs...</div>
-        ) : error ? (
-          <div className="text-red-500">{error}</div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {songs.map((song) => (
+          <div className="grid grid-cols-1 gap-4" aria-label="Loading songs">
+            {[...Array(10)].map((_, i) => (
               <div
-                key={song.id}
-                className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${selectedSong?.id === song.id ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]" : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"}`}
-                onClick={() => handleSelectSong(song)}
+                key={i}
+                className="flex items-center p-3 rounded-lg border border-[var(--app-card-border)] bg-[var(--app-card-bg)] animate-pulse"
               >
-                <Image
-                  src={song.cover}
-                  alt={song.title}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-lg object-cover mr-4"
-                />
-                <div className="flex-1">
-                  <div className="font-medium text-[var(--app-foreground)] flex items-center gap-2">
-                    {song.title}
-                  </div>
-                  <div className="text-xs text-[var(--app-foreground-muted)]">
-                    {song.artist}
-                  </div>
+                <div className="w-12 h-12 rounded-lg bg-[var(--app-gray)] mr-4" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-[var(--app-gray)] rounded w-2/3" />
+                  <div className="h-3 bg-[var(--app-gray)] rounded w-1/3" />
                 </div>
-                {selectedSong?.id === song.id && (
-                  <Icon name="check" className="text-[var(--app-accent)]" />
-                )}
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-red-500">{error}</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4">
+              {songs.map((song) => (
+                <div
+                  key={song.id}
+                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${selectedSong?.id === song.id ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]" : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"}`}
+                  onClick={() => handleSelectSong(song)}
+                >
+                  {song.cover ? (
+                    <Image
+                      src={song.cover}
+                      alt={song.title}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-lg object-cover mr-4"
+                      priority
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-[var(--app-gray)] mr-4 flex items-center justify-center">
+                      <Icon
+                        name="star"
+                        size="sm"
+                        className="text-[var(--app-foreground-muted)]"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="font-medium text-[var(--app-foreground)] flex items-center gap-2">
+                      {song.title}
+                      {song.platformName && (
+                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-[var(--app-accent-light)] text-[var(--app-accent)]">
+                          {song.platformName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[var(--app-foreground-muted)]">
+                      {song.artist}
+                    </div>
+                  </div>
+                  {selectedSong?.id === song.id && (
+                    <Icon name="check" className="text-[var(--app-accent)]" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between mt-4">
+              <button
+                className="px-4 py-2 rounded bg-[var(--app-card-border)] text-[var(--app-foreground-muted)] disabled:opacity-50"
+                onClick={() => {
+                  setBefore(pageInfo.startCursor);
+                  setAfter(null);
+                  setDirection("backward");
+                }}
+                disabled={!pageInfo.hasPreviousPage || loading}
+              >
+                Previous
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-[var(--app-card-border)] text-[var(--app-foreground-muted)] disabled:opacity-50"
+                onClick={() => {
+                  setAfter(pageInfo.endCursor);
+                  setBefore(null);
+                  setDirection("forward");
+                }}
+                disabled={!pageInfo.hasNextPage || loading}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
         {selectedSong && (
           <div className="mt-4 space-y-2">
@@ -244,7 +496,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
             >
               <div className="w-full">
                 <span className="block text-center font-medium text-[var(--app-accent)] mb-1">
-                  Tip 5¢ in ETH to Creator
+                  Tip 5¢ in ETH to Creators
                 </span>
                 <TransactionButton className="w-full bg-[var(--app-accent)] text-white mt-2" />
               </div>

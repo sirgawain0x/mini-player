@@ -55,6 +55,36 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.mypinata.cloud",
       },
+      {
+        protocol: "https",
+        hostname: "web3-music-pipeline.mypinata.cloud/ipfs",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "catalogworks.b-cdn.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.b-cdn.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "spinamp.b-cdn.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.spinamp.xyz",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.spinamp.xyz",
+        pathname: "/**",
+      },
     ],
   },
   // Silence warnings
