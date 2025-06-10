@@ -4,6 +4,59 @@ const nextConfig = {
   experimental: {
     esmExternals: "loose", // Handle ES modules more loosely
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.ipfs.dweb.link",
+      },
+      {
+        protocol: "https",
+        hostname: "**.ipfs.nftstorage.link",
+      },
+      {
+        protocol: "https",
+        hostname: "ipfs.io",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "gateway.pinata.cloud",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.arweave.net",
+      },
+      {
+        protocol: "https",
+        hostname: "arweave.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.spinamp.xyz",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.sound.xyz",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.mypinata.cloud",
+      },
+    ],
+  },
   // Silence warnings
   // https://github.com/WalletConnect/walletconnect-monorepo/issues/1908
   webpack: (config) => {
