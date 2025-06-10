@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useAccount } from "wagmi";
 import Image from "next/image";
 import {
@@ -52,6 +52,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
   const [failedImages, setFailedImages] = useState<{ [id: string]: boolean }>(
     {}
   );
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const sortOptions = [
     { label: "🔥 Trending", value: "TRENDING" },
@@ -378,6 +379,20 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
     _setSelectedSong(song);
     setSelectedSong(song);
   }
+
+  useEffect(() => {
+    if (selectedSong && audioRef.current) {
+      // Try to play the audio when a new song is selected
+      audioRef.current.currentTime = 0;
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay might be blocked, ignore error
+        });
+      }
+    }
+  }, [selectedSong]);
+
   return (
     <Card title=" Discover Music">
       <div className="space-y-4">
@@ -489,9 +504,11 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         {selectedSong && (
           <div className="mt-4 space-y-2">
             <audio
+              ref={audioRef}
               controls
               src={selectedSong.audioUrl}
               className="w-full rounded"
+              autoPlay
             />
             <Transaction
               calls={calls}
