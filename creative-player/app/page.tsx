@@ -23,6 +23,7 @@ import { Button } from "./components/ui/Button";
 import { Icon } from "./components/ui/Icon";
 import { Home } from "./components/music/Home";
 import { Features } from "./components/music/Features";
+import { Fund } from "./components/music/Funds";
 import { handleSplashScreen } from "./utils/farcaster";
 
 // Loading skeleton component
@@ -159,6 +160,7 @@ export default function App() {
         <main className="flex-1">
           {activeTab === "home" && <Home setActiveTab={setActiveTab} />}
           {activeTab === "features" && <Features setActiveTab={setActiveTab} />}
+          {activeTab === "fund" && <Fund setActiveTab={setActiveTab} />}
         </main>
 
         <footer className="mt-2 pt-4 flex justify-center">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Playlist, Song } from "@/types/music";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
@@ -9,8 +9,6 @@ import { PlaylistSection } from "./PlaylistSection";
 import { PlaylistView } from "./PlaylistView";
 import { RecentTips } from "./RecentTips";
 import { TransactionCard } from "./TransactionCard";
-
-import { useAccount } from "wagmi";
 
 type HomeProps = {
   setActiveTab: (tab: string) => void;
@@ -32,45 +30,6 @@ export function Home({ setActiveTab }: HomeProps) {
   const artistId =
     selectedSong?.artist || "sound-0x7e4c2e6e6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e";
 
-  const { address } = useAccount();
-
-  const generateOnrampUrl = useCallback(async () => {
-    if (!address) return null;
-
-    try {
-      // Get session token from our API
-      const response = await fetch("/api/onramp/session-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ address }),
-      });
-
-      if (!response.ok) {
-        console.error("Failed to get session token");
-        return null;
-      }
-
-      const { token } = await response.json();
-
-      // Generate onramp URL with session token
-      const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
-      const baseUrl = "https://pay.coinbase.com/buy";
-      const params = new URLSearchParams({
-        projectId: projectId || "",
-        sessionToken: token,
-        presetFiatAmount: "10",
-        fiatCurrency: "USD",
-      });
-
-      return `${baseUrl}?${params.toString()}`;
-    } catch (error) {
-      console.error("Error generating onramp URL:", error);
-      return null;
-    }
-  }, [address]);
-
   return (
     <div className="space-y-6 animate-fade-in">
       <Card title="Genesis Jukebox 🎵">
@@ -86,12 +45,7 @@ export function Home({ setActiveTab }: HomeProps) {
             Explore Features
           </Button>
           <Button
-            onClick={async () => {
-              const url = await generateOnrampUrl();
-              if (url) {
-                window.open(url, "_blank");
-              }
-            }}
+            onClick={() => setActiveTab("fund")}
             variant="outline"
             icon={<Icon name="plus" size="sm" />}
           >
