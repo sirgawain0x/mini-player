@@ -49,6 +49,9 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
   const { address } = useAccount();
   const sendNotification = useNotification();
   const minTipEth = BigInt(Math.floor(0.00001429 * 1e18));
+  const [failedImages, setFailedImages] = useState<{ [id: string]: boolean }>(
+    {}
+  );
 
   const sortOptions = [
     { label: "🔥 Trending", value: "TRENDING" },
@@ -414,7 +417,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
                   className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${selectedSong?.id === song.id ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]" : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"}`}
                   onClick={() => handleSelectSong(song)}
                 >
-                  {song.cover ? (
+                  {song.cover && !failedImages[song.id] ? (
                     <Image
                       src={song.cover}
                       alt={song.title}
@@ -422,6 +425,12 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
                       height={48}
                       className="w-12 h-12 rounded-lg object-cover mr-4"
                       priority
+                      onError={() =>
+                        setFailedImages((prev) => ({
+                          ...prev,
+                          [song.id]: true,
+                        }))
+                      }
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-[var(--app-gray)] mr-4 flex items-center justify-center">
