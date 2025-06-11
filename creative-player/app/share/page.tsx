@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { sdk } from "@farcaster/frame-sdk";
 import { handleSplashScreen } from "../utils/farcaster";
@@ -51,7 +51,17 @@ function isFarcasterShareContext(
   return loc.type === "cast_share";
 }
 
-export default function SharePage() {
+export default function SharePageWrapper() {
+  return (
+    <Suspense
+      fallback={<div style={{ padding: 32 }}>Loading shared cast...</div>}
+    >
+      <SharePage />
+    </Suspense>
+  );
+}
+
+function SharePage() {
   const searchParams = useSearchParams();
   const [isShareContext, setIsShareContext] = useState(false);
   const [sharedCast, setSharedCast] = useState<MiniappCast | null>(null);
