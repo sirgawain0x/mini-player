@@ -2,6 +2,7 @@
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { FundCard } from "@coinbase/onchainkit/fund";
+// NOTE: To integrate Divvi referral, import getDataSuffix, submitReferral from '@divvi/referral-sdk' and useChainId from 'wagmi' when adding a custom transaction. See integration plan for details.
 
 type FundProps = {
   setActiveTab: (tab: string) => void;
