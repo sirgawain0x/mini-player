@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import Image from "next/image";
 import {
   Transaction,
@@ -20,6 +20,7 @@ import { Song } from "@/types/music";
 import { Card } from "../ui/Card";
 import { Icon } from "../ui/Icon";
 import { Pills } from "../ui/Pills";
+import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
 
 type JukeboxProps = {
   onSongTipped: (song: Song) => void;
@@ -47,12 +48,19 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
     startCursor: null,
   });
   const { address } = useAccount();
+  const chainId = useChainId();
   const sendNotification = useNotification();
   const minTipEth = BigInt(Math.floor(0.00001429 * 1e18));
   const [failedImages, setFailedImages] = useState<{ [id: string]: boolean }>(
     {}
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Divvi referral dataSuffix
+  const dataSuffix = getDataSuffix({
+    consumer: "0x1Fde40a4046Eda0cA0539Dd6c77ABF8933B94260",
+    providers: ["0xc95876688026be9d6fa7a7c33328bd013effa2bb"],
+  });
 
   const sortOptions = [
     { label: "🔥 Trending", value: "TRENDING" },
@@ -355,16 +363,17 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         ? [
             {
               to: selectedSong.creatorAddress as `0x${string}`,
-              data: "0x" as `0x${string}`,
+              data: ("0x" + dataSuffix.slice(2)) as `0x${string}`,
               value: minTipEth,
             },
           ]
         : [],
-    [selectedSong, address, minTipEth]
+    [selectedSong, address, minTipEth, dataSuffix]
   );
   const handleSuccess = useCallback(
     async (response: TransactionResponse) => {
       const transactionHash = response.transactionReceipts[0].transactionHash;
+      await submitReferral({ txHash: transactionHash, chainId });
       await sendNotification({
         title: "Thank you!",
         body: `You tipped the creator! Tx: ${transactionHash}`,
@@ -373,7 +382,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         onSongTipped(selectedSong);
       }
     },
-    [sendNotification, selectedSong, onSongTipped]
+    [sendNotification, selectedSong, onSongTipped, chainId]
   );
   function handleSelectSong(song: Song) {
     _setSelectedSong(song);

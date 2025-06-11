@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@coinbase/onchainkit": "latest",
+    "@divvi/referral-sdk": "^1.0.0",
     "@farcaster/frame-sdk": "^0.0.35",
     "@livepeer/ai": "^0.6.2",
     "@tanstack/react-query": "^5",

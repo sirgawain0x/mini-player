@@ -16,33 +16,42 @@ import {
 } from "@coinbase/onchainkit/transaction";
 import { useNotification } from "@coinbase/onchainkit/minikit";
 import { Card } from "../ui/Card";
+import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
+import { useChainId } from "wagmi";
 
 export function TransactionCard() {
   const { address } = useAccount();
+  const chainId = useChainId();
+  // Divvi referral dataSuffix
+  const dataSuffix = getDataSuffix({
+    consumer: "0x1Fde40a4046Eda0cA0539Dd6c77ABF8933B94260",
+    providers: ["0xc95876688026be9d6fa7a7c33328bd013effa2bb"],
+  });
   const calls = useMemo(
     () =>
       address
         ? [
             {
               to: address,
-              data: "0x" as `0x${string}`,
+              data: ("0x" + dataSuffix.slice(2)) as `0x${string}`,
               value: BigInt(0),
             },
           ]
         : [],
-    [address]
+    [address, dataSuffix]
   );
   const sendNotification = useNotification();
   const handleSuccess = useCallback(
     async (response: TransactionResponse) => {
       const transactionHash = response.transactionReceipts[0].transactionHash;
+      await submitReferral({ txHash: transactionHash, chainId });
       console.log(`Transaction successful: ${transactionHash}`);
       await sendNotification({
         title: "Congratulations!",
         body: `You sent your a transaction, ${transactionHash}!`,
       });
     },
-    [sendNotification]
+    [sendNotification, chainId]
   );
   return (
     <Card title="Customize Your Playlist">

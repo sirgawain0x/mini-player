@@ -10,6 +10,8 @@ import {
   TransactionButton,
   LifecycleStatus,
 } from "@coinbase/onchainkit/transaction";
+import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
+import { useChainId } from "wagmi";
 
 export function PlaylistSection({
   onCreate,
@@ -36,6 +38,12 @@ export function PlaylistSection({
   >("idle");
 
   const COMPANY_WALLET_ADDRESS = "0x1Fde40a4046Eda0cA0539Dd6c77ABF8933B94260";
+  const chainId = useChainId();
+  // Divvi referral dataSuffix
+  const dataSuffix = getDataSuffix({
+    consumer: COMPANY_WALLET_ADDRESS,
+    providers: ["0xc95876688026be9d6fa7a7c33328bd013effa2bb"],
+  });
 
   useEffect(() => {
     if (showSaveModal) {
@@ -136,6 +144,7 @@ export function PlaylistSection({
         const txHash =
           status.statusData.transactionReceipts[0]?.transactionHash;
         try {
+          await submitReferral({ txHash, chainId });
           const res = await fetch("/api/playlists", {
             method: "POST",
             body: JSON.stringify({
@@ -166,7 +175,7 @@ export function PlaylistSection({
         showToast("Transaction failed. Please try again.");
       }
     },
-    [playlistName, coverImage, description, tags, onCreate]
+    [playlistName, coverImage, description, tags, onCreate, chainId]
   );
 
   const calls =
@@ -174,7 +183,7 @@ export function PlaylistSection({
       ? [
           {
             to: COMPANY_WALLET_ADDRESS as `0x${string}`,
-            data: "0x" as `0x${string}`,
+            data: ("0x" + dataSuffix.slice(2)) as `0x${string}`,
             value: ethAmount,
           },
         ]
