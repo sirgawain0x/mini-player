@@ -35,6 +35,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "**.arweave.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "**.spinamp.xyz",
       },
       {
@@ -84,6 +89,16 @@ const nextConfig = {
         protocol: "https",
         hostname: "images.spinamp.xyz",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cloudfront.net",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "catalogworks.b-cdn.net",
+        pathname: "ipfs/**",
       },
     ],
   },

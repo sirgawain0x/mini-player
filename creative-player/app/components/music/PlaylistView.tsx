@@ -2,31 +2,33 @@
 import { Playlist, Song } from "@/types/music";
 import { Card } from "../ui/Card";
 import Image from "next/image";
+import { useGetPlaylistSongs } from "@/lib/contracts";
 
-export function PlaylistView({
-  playlist,
-  songs,
-}: {
-  playlist: Playlist;
-  songs: Song[];
-}) {
+export function PlaylistView({ playlist }: { playlist: Playlist }) {
+  const { name, description, coverImage, tags } = playlist;
+
+  const { data: songs, isLoading: isLoadingSongs } = useGetPlaylistSongs(
+    playlist.address
+  );
+
   return (
-    <Card title={playlist.name || "Your Playlist"}>
-      {playlist.coverImage && (
+    <Card title={name || "Your Playlist"}>
+      {coverImage && (
         <Image
-          src={playlist.coverImage}
+          src={coverImage}
           alt="Playlist cover"
           width={128}
           height={128}
           className="w-32 h-32 object-cover rounded mb-4"
           priority
+          unoptimized={true}
         />
       )}
       <div className="mb-2 text-[var(--app-foreground-muted)]">
-        {playlist.description}
+        {description}
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
-        {playlist.tags.map((tag: string, idx: number) => (
+        {tags.map((tag: string, idx: number) => (
           <span
             key={idx}
             className="bg-[var(--app-accent-light)] text-[var(--app-accent)] px-2 py-1 rounded text-xs"
@@ -35,14 +37,17 @@ export function PlaylistView({
           </span>
         ))}
       </div>
+
       <h4 className="font-medium mb-2">Tipped Songs</h4>
-      {songs.length === 0 ? (
+      {isLoadingSongs ? (
+        <div>Loading songs...</div>
+      ) : songs && songs.length === 0 ? (
         <div className="text-[var(--app-foreground-muted)]">
           No songs tipped yet. Tip a song to add it to your playlist!
         </div>
       ) : (
         <ul className="space-y-3">
-          {songs.map((song) => (
+          {songs?.map((song: Song) => (
             <li key={song.id} className="flex items-center gap-3 border-b pb-2">
               <Image
                 src={song.cover}
@@ -51,6 +56,7 @@ export function PlaylistView({
                 height={48}
                 className="w-12 h-12 rounded object-cover"
                 priority
+                unoptimized={true}
               />
               <div className="flex-1">
                 <div className="font-medium flex items-center gap-2">

@@ -5,7 +5,7 @@ export type Song = {
   cover: string;
   creatorAddress: string;
   audioUrl: string;
-  playCount: number;
+  playCount: number | bigint;
   platformName?: string;
 };
 
@@ -14,6 +14,7 @@ export type Playlist = {
   coverImage: string;
   description: string;
   tags: string[];
+  address?: `0x${string}`;
 };
 
 export type RecentTip = {

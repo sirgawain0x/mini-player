@@ -1,6 +1,20 @@
 "use server";
 import { NextRequest, NextResponse } from "next/server";
 import { livepeer } from "@/lib/livepeer";
+import { getContractAddresses } from "@/lib/contracts";
+import { createPublicClient, http } from "viem";
+import { baseSepolia, base } from "viem/chains";
+
+// ABI for checking payment
+const create2FactoryABI = [
+  {
+    name: "getRequiredETHForCents",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "cents", type: "uint256" }],
+    outputs: [{ type: "uint256" }],
+  },
+] as const;
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,11 +28,20 @@ export async function POST(req: NextRequest) {
       safetyCheck,
       numInferenceSteps,
       numImagesPerPrompt,
+      paymentTx, // Transaction hash of the payment
+      chainId, // Chain ID where payment was made
     } = await req.json();
 
     if (!prompt) {
       return NextResponse.json(
         { error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!paymentTx || !chainId) {
+      return NextResponse.json(
+        { error: "Payment is required for image generation" },
         { status: 400 }
       );
     }
@@ -29,6 +52,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Livepeer API key not configured" },
         { status: 500 }
+      );
+    }
+
+    // Create public client based on chain
+    const chain = chainId === 84532 ? baseSepolia : base;
+    const publicClient = createPublicClient({
+      chain,
+      transport: http(),
+    });
+
+    // Verify payment transaction
+    try {
+      const tx = await publicClient.getTransaction({
+        hash: paymentTx as `0x${string}`,
+      });
+      const addresses = getContractAddresses(chainId);
+
+      // Check if transaction was sent to the correct contract
+      if (tx.to?.toLowerCase() !== addresses.CREATE2_FACTORY.toLowerCase()) {
+        return NextResponse.json(
+          { error: "Invalid payment transaction - wrong recipient" },
+          { status: 400 }
+        );
+      }
+
+      // Get required ETH amount for 2 cents
+      const requiredETH = await publicClient.readContract({
+        address: addresses.CREATE2_FACTORY,
+        abi: create2FactoryABI,
+        functionName: "getRequiredETHForCents",
+        args: [BigInt(2)], // 2 cents per image
+      });
+
+      // Check if enough ETH was paid
+      if (tx.value < requiredETH) {
+        return NextResponse.json(
+          { error: "Insufficient payment amount" },
+          { status: 400 }
+        );
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      return NextResponse.json(
+        { error: "Failed to verify payment transaction" },
+        { status: 400 }
       );
     }
 

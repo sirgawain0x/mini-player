@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Playlist, Song } from "@/types/music";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
@@ -8,7 +8,6 @@ import { Jukebox } from "./Jukebox";
 import { PlaylistSection } from "./PlaylistSection";
 import { PlaylistView } from "./PlaylistView";
 import { RecentTips } from "./RecentTips";
-import { TransactionCard } from "./TransactionCard";
 
 type HomeProps = {
   setActiveTab: (tab: string) => void;
@@ -24,9 +23,9 @@ export function Home({ setActiveTab }: HomeProps) {
       prev.find((s) => s.id === song.id) ? prev : [...prev, song]
     );
   };
-  const handlePlaylistCreate = (pl: Playlist) => {
+  const handlePlaylistCreate = useCallback((pl: Playlist) => {
     setPlaylist(pl);
-  };
+  }, []);
   const artistId =
     selectedSong?.artist || "sound-0x7e4c2e6e6e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e";
 
@@ -56,15 +55,14 @@ export function Home({ setActiveTab }: HomeProps) {
       <Jukebox
         onSongTipped={handleSongTipped}
         setSelectedSong={setSelectedSong}
+        playlist={playlist}
       />
       <PlaylistSection onCreate={handlePlaylistCreate} created={!!playlist} />
-      {playlist ? (
-        <>
+      {playlist && (
+        <div>
           <PlaylistView playlist={playlist} songs={tippedSongs} />
           <RecentTips artistId={artistId} />
-        </>
-      ) : (
-        <TransactionCard />
+        </div>
       )}
     </div>
   );

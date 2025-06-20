@@ -16,18 +16,24 @@ import {
   TransactionStatus,
 } from "@coinbase/onchainkit/transaction";
 import { useNotification } from "@coinbase/onchainkit/minikit";
-import { Song } from "@/types/music";
+import { Song, Playlist } from "@/types/music";
 import { Card } from "../ui/Card";
 import { Icon } from "../ui/Icon";
 import { Pills } from "../ui/Pills";
 import { getDataSuffix, submitReferral } from "@divvi/referral-sdk";
+import { playlistABI } from "@/lib/contracts";
 
 type JukeboxProps = {
   onSongTipped: (song: Song) => void;
   setSelectedSong: (song: Song) => void;
+  playlist: Playlist | null;
 };
 
-export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
+export function Jukebox({
+  onSongTipped,
+  setSelectedSong,
+  playlist,
+}: JukeboxProps) {
   const [selectedSong, _setSelectedSong] = useState<Song | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
@@ -261,24 +267,43 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
       dataPath = "allProcessedTracks";
     }
 
+    type TrackNode = {
+      id: string;
+      title?: string;
+      lossyArtworkUrl?: string;
+      lossyAudioUrl?: string;
+      artistByArtistId?: {
+        name?: string;
+      };
+      platformByPlatformId?: {
+        name?: string;
+      };
+      artistId?: string;
+      processedTrackByTrackId?: Omit<TrackNode, "processedTrackByTrackId">;
+    };
+
     fetch("https://api.spinamp.xyz/v3/graphql", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
     })
       .then((res) => res.json())
-      .then((data) => {
-        if (data.errors) {
-          setError(
-            data.errors[0]?.message.includes("timeout")
-              ? "The server took too long to respond. Please try again later or reduce the number of tracks."
-              : `GraphQL Error: ${data.errors[0]?.message || "Unknown error"}`
-          );
-          setLoading(false);
+      .then((result) => {
+        if (result.errors) {
+          console.error(result.errors);
+          setError("Failed to fetch tracks.");
           return;
         }
-        const connection = data?.data?.[dataPath] || {};
-        const edges: Edge[] = connection.edges || [];
+
+        const connection = result.data?.[dataPath] || {};
+        const edges: {
+          node: TrackNode;
+        }[] = connection.edges || [];
         const pageInfo = connection.pageInfo || {};
         setPageInfo({
           endCursor: pageInfo.endCursor || null,
@@ -288,47 +313,16 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         });
 
         if (!Array.isArray(edges) || edges.length === 0) {
-          console.error("No edges returned for", sortBy, data);
+          console.error("No edges returned for", sortBy, result);
         }
 
-        type TrackNode = {
-          processedTrackByTrackId?: {
-            id: string;
-            title: string;
-            lossyAudioUrl?: string;
-            lossyArtworkUrl?: string;
-            artistId?: string;
-            artistByArtistId?: {
-              name?: string;
-            };
-            platformByPlatformId?: {
-              name?: string;
-            };
-          };
-          id?: string;
-          title?: string;
-          lossyAudioUrl?: string;
-          lossyArtworkUrl?: string;
-          artistId?: string;
-          artistByArtistId?: {
-            name?: string;
-          };
-          platformByPlatformId?: {
-            name?: string;
-          };
-        };
-        type Edge = {
-          node: TrackNode;
-        };
-
         const mappedSongs: Song[] = edges
-          .map((edge: Edge) => {
+          .map((edge: { node: TrackNode }) => {
             // Support both node structures
-            let track: TrackNode["processedTrackByTrackId"] | TrackNode | null =
-              null;
+            let track: TrackNode | null = null;
             let artistId: string | undefined;
             if (sortBy === "TRENDING") {
-              track = edge.node.processedTrackByTrackId;
+              track = edge.node.processedTrackByTrackId || null;
               artistId = edge.node.processedTrackByTrackId?.artistId;
             } else {
               track = edge.node;
@@ -357,23 +351,53 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
       });
   }, [sortBy, after, before, direction]);
 
-  const calls = useMemo(
-    () =>
-      selectedSong && address
-        ? [
-            {
-              to: selectedSong.creatorAddress as `0x${string}`,
-              data: ("0x" + dataSuffix.slice(2)) as `0x${string}`,
-              value: minTipEth,
-            },
-          ]
-        : [],
-    [selectedSong, address, minTipEth, dataSuffix]
-  );
+  const calls = useMemo(() => {
+    if (!selectedSong || !address) {
+      return [];
+    }
+    const tipCall = {
+      to: selectedSong.creatorAddress as `0x${string}`,
+      data: ("0x" + dataSuffix.slice(2)) as `0x${string}`,
+      value: minTipEth,
+    };
+    if (playlist?.address) {
+      const addSongCall = {
+        abi: playlistABI,
+        address: playlist.address,
+        functionName: "addSong",
+        args: [
+          selectedSong.id,
+          selectedSong.title,
+          selectedSong.artist,
+          selectedSong.cover,
+          selectedSong.audioUrl,
+        ],
+      };
+      return [tipCall, addSongCall];
+    }
+    return [tipCall];
+  }, [selectedSong, address, minTipEth, dataSuffix, playlist]);
+
   const handleSuccess = useCallback(
     async (response: TransactionResponse) => {
       const transactionHash = response.transactionReceipts[0].transactionHash;
       await submitReferral({ txHash: transactionHash, chainId });
+
+      if (playlist && selectedSong) {
+        // TODO: Replace with actual contract call to add song to playlist
+        console.log(
+          `Adding song ${selectedSong.id} to playlist ${playlist.name} (${playlist.address})`
+        );
+        // This is where you would make a write call to your playlist contract
+        // For example:
+        // const { write } = useContractWrite({
+        //   address: playlist.address,
+        //   abi: playlistABI,
+        //   functionName: 'addSong',
+        // });
+        // write({ args: [selectedSong.id, selectedSong.metadataUrl] });
+      }
+
       await sendNotification({
         title: "Thank you!",
         body: `You tipped the creator! Tx: ${transactionHash}`,
@@ -382,7 +406,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
         onSongTipped(selectedSong);
       }
     },
-    [sendNotification, selectedSong, onSongTipped, chainId]
+    [sendNotification, selectedSong, onSongTipped, chainId, playlist]
   );
   function handleSelectSong(song: Song) {
     _setSelectedSong(song);
@@ -438,7 +462,11 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
               {songs.map((song) => (
                 <div
                   key={song.id}
-                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${selectedSong?.id === song.id ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]" : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"}`}
+                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedSong?.id === song.id
+                      ? "border-[var(--app-accent)] bg-[var(--app-accent-light)]"
+                      : "border-[var(--app-card-border)] bg-[var(--app-card-bg)]"
+                  }`}
                   onClick={() => handleSelectSong(song)}
                 >
                   {song.cover && !failedImages[song.id] ? (
@@ -455,6 +483,7 @@ export function Jukebox({ onSongTipped, setSelectedSong }: JukeboxProps) {
                           [song.id]: true,
                         }))
                       }
+                      unoptimized={true}
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-[var(--app-gray)] mr-4 flex items-center justify-center">
