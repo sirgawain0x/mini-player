@@ -15,13 +15,10 @@ type HomeProps = {
 
 export function Home({ setActiveTab }: HomeProps) {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [tippedSongs, setTippedSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
 
-  const handleSongTipped = (song: Song) => {
-    setTippedSongs((prev) =>
-      prev.find((s) => s.id === song.id) ? prev : [...prev, song]
-    );
+  const handleSongTipped = () => {
+    // Songs are now managed by the PlaylistView component via contract
   };
   const handlePlaylistCreate = useCallback((pl: Playlist) => {
     setPlaylist(pl);
@@ -60,7 +57,7 @@ export function Home({ setActiveTab }: HomeProps) {
       <PlaylistSection onCreate={handlePlaylistCreate} created={!!playlist} />
       {playlist && (
         <div>
-          <PlaylistView playlist={playlist} songs={tippedSongs} />
+          <PlaylistView playlist={playlist} />
           <RecentTips artistId={artistId} />
         </div>
       )}

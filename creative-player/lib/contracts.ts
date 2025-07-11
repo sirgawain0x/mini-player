@@ -6,12 +6,12 @@ const CONTRACT_ADDRESSES = {
   // Base Sepolia (Testnet)
   84532: {
     CREATE2_FACTORY: "0x5A7861D29088B67Cc03d85c4D89B855201e030EB" as const,
-    PRICE_FEED: "0x4aB110558a2007490647A5371F8953114422915B" as const, // ETH/USD
+    PRICE_FEED: "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1" as const, // ETH/USD
   },
   // Base Mainnet (Production)
   8453: {
     CREATE2_FACTORY: "0x585571bF2BE914e0C9CE549E99E2E61888d09cC2" as const,
-    PRICE_FEED: "0x4aDC67696bA383F43DD60A9e78F2C97A81542192" as const, // ETH/USD
+    PRICE_FEED: "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70" as const, // ETH/USD
   },
 } as const;
 
@@ -57,7 +57,7 @@ export const create2FactoryABI = [
   },
   {
     type: "event",
-    name: "PlaylistCreated",
+    name: "PlaylistDeployed",
     inputs: [
       {
         name: "playlistAddress",
@@ -65,9 +65,46 @@ export const create2FactoryABI = [
         indexed: true,
       },
       {
+        name: "name",
+        type: "string",
+        indexed: false,
+      },
+      {
         name: "owner",
         type: "address",
         indexed: true,
+      },
+      {
+        name: "salt",
+        type: "uint256",
+        indexed: false,
+      },
+      {
+        name: "tags",
+        type: "string[]",
+        indexed: false,
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "PlaylistDeploymentFailed",
+    inputs: [
+      {
+        name: "name",
+        type: "string",
+        indexed: false,
+      },
+      {
+        name: "owner",
+        type: "address",
+        indexed: true,
+      },
+      {
+        name: "reason",
+        type: "string",
+        indexed: false,
       },
     ],
     anonymous: false,

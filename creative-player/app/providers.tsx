@@ -24,9 +24,9 @@ export function Providers(props: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <MiniKitProvider
-        chain={base}
-        projectId="4dbcea92-3e01-46b1-9ea3-3d8de9bfaaf5"
+        projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
         apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+        chain={base}
         notificationProxyUrl="/api/notify"
         config={{
           appearance: {
