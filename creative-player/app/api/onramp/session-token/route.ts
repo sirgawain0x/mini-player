@@ -1,13 +1,32 @@
 "use server";
 import { NextRequest, NextResponse } from "next/server";
+import { generateJWT } from "@/lib/session-token";
 
 export async function POST(request: NextRequest) {
   try {
-    const { address } = await request.json();
+    const requestData = await request.json();
 
-    if (!address) {
+    // Support both old format (just address) and new format (full addresses array)
+    let addresses: Array<{ address: string; blockchains: string[] }>;
+    let assets: string[] = ["ETH", "USDC"];
+
+    if (requestData.address && typeof requestData.address === "string") {
+      // Old format - just address
+      addresses = [
+        {
+          address: requestData.address,
+          blockchains: ["base", "ethereum"],
+        },
+      ];
+    } else if (requestData.addresses && Array.isArray(requestData.addresses)) {
+      // New format - full addresses array
+      addresses = requestData.addresses;
+      if (requestData.assets) {
+        assets = requestData.assets;
+      }
+    } else {
       return NextResponse.json(
-        { error: "Address is required" },
+        { error: "Address or addresses array is required" },
         { status: 400 }
       );
     }
@@ -22,45 +41,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate JWT using CDP SDK
+    const token = await generateJWT(apiKey, apiSecret);
+
     // Create the request payload
     const payload = {
-      addresses: [
-        {
-          address: address,
-          blockchains: ["base", "ethereum"],
-        },
-      ],
-      assets: ["ETH", "USDC"],
+      addresses,
+      assets,
     };
 
-    // Create timestamp and signature for authentication
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const method = "POST";
-    const requestPath = "/onramp/v1/token";
-    const body = JSON.stringify(payload);
-
-    // Create the message to sign
-    const message = timestamp + method + requestPath + body;
-
-    // Import crypto for signing
-    const crypto = await import("crypto");
-    const signature = crypto
-      .createHmac("sha256", apiSecret)
-      .update(message)
-      .digest("hex");
-
-    // Make the API call to Coinbase
+    // Make the API call to Coinbase with JWT authentication
     const response = await fetch(
       "https://api.developer.coinbase.com/onramp/v1/token",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "CB-ACCESS-KEY": apiKey,
-          "CB-ACCESS-SIGN": signature,
-          "CB-ACCESS-TIMESTAMP": timestamp,
+          Authorization: `Bearer ${token}`,
         },
-        body: body,
+        body: JSON.stringify(payload),
       }
     );
 
