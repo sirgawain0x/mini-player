@@ -24,7 +24,7 @@ const ImageGenerationPriceDisplay = React.forwardRef<
       y: 0,
       scale: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 30,
         staggerChildren: 0.1,
@@ -38,7 +38,7 @@ const ImageGenerationPriceDisplay = React.forwardRef<
       opacity: 1,
       x: 0,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 400,
         damping: 28,
       },
@@ -51,7 +51,7 @@ const ImageGenerationPriceDisplay = React.forwardRef<
       scale: 1,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 500,
         damping: 25,
       },
@@ -97,7 +97,7 @@ const ImageGenerationPriceDisplay = React.forwardRef<
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 animate={priceData.isLoading ? { rotate: [0, 360] } : {}}
                 transition={{
-                  type: "spring",
+                  type: "spring" as const,
                   stiffness: 400,
                   damping: 25,
                   rotate: { duration: 1, ease: "easeInOut" },
@@ -138,7 +138,11 @@ const ImageGenerationPriceDisplay = React.forwardRef<
               className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/30"
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              transition={{
+                type: "spring" as const,
+                stiffness: 400,
+                damping: 25,
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
