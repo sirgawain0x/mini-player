@@ -1,45 +1,111 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { AdvancedFunds } from "./AdvancedFunds";
-// import { useAccount } from "wagmi";
-// import { generateSessionToken, formatAddressesForToken } from "@/lib/session-token";
-// NOTE: To integrate Divvi referral, import getDataSuffix, submitReferral from '@divvi/referral-sdk' and useChainId from 'wagmi' when adding a custom transaction. See integration plan for details.
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { FundButton } from "@coinbase/onchainkit/fund";
+import { Button } from "../ui/Button";
+import { Card } from "../ui/Card";
 
 type FundProps = {
   setActiveTab: (tab: string) => void;
 };
 
 export function Fund({ setActiveTab }: FundProps) {
-  const [cdpProjectId, setCdpProjectId] = useState("");
+  const { address } = useAccount();
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedAmount, setSelectedAmount] = useState(30);
+
+  const asset = "ETH";
+  const amounts = [1, 5, 10];
 
   useEffect(() => {
-    // Fetch CDP Project ID from server
-    const fetchCdpProjectId = async () => {
-      try {
-        const response = await fetch("/api/auth", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    if (!address) return;
+    setLoading(true);
+    setError(null);
+    setSessionToken(null);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+    fetch("/api/onramp-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        assets: [asset],
+        blockchains: ["base"],
+        fiatCurrency: "USD",
+        defaultPaymentMethod: "CRYPTO_ACCOUNT",
+        presetFiatAmount: selectedAmount,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to fetch session token");
         }
+        return res.json();
+      })
+      .then((data) => setSessionToken(data.sessionToken))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [address, selectedAmount]);
 
-        const data = await response.json();
-        if (data.success) {
-          setCdpProjectId(data.config.cdpProjectId || "");
-        }
-      } catch {
-        setCdpProjectId("");
-      }
-    };
-
-    fetchCdpProjectId();
-  }, []);
+  const onrampUrl = sessionToken
+    ? `https://pay.coinbase.com/buy/select-asset?sessionToken=${sessionToken}&defaultNetwork=base&defaultAsset=${asset}&presetFiatAmount=${selectedAmount}&fiatCurrency=USD`
+    : null;
 
   return (
-    <AdvancedFunds setActiveTab={setActiveTab} cdpProjectId={cdpProjectId} />
+    <div className="space-y-6 animate-fade-in">
+      <Card title="Buy ETH on Base">
+        {/* Amount Selection */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Select Amount (USD)</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {amounts.map((amount) => (
+              <Button
+                key={amount}
+                variant={selectedAmount === amount ? "primary" : "outline"}
+                onClick={() => setSelectedAmount(amount)}
+              >
+                ${amount}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="py-8 text-center text-[var(--app-foreground-muted)]">
+            Loading funding options...
+          </div>
+        )}
+
+        {/* Fund Button */}
+        {!loading && onrampUrl && (
+          <div className="space-y-4">
+            <FundButton
+              className="w-full"
+              fundingUrl={onrampUrl}
+              openIn="tab"
+              disabled={!address}
+            />
+          </div>
+        )}
+
+        <Button
+          className="mt-4"
+          variant="outline"
+          onClick={() => setActiveTab("home")}
+        >
+          Back to Home
+        </Button>
+      </Card>
+    </div>
   );
 }
