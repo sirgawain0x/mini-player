@@ -1,0 +1,2 @@
+# This file ensures the generated directory exists in git
+# The actual generated images are ignored via .gitignore 
