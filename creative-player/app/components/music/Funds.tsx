@@ -17,7 +17,7 @@ export function Fund({ setActiveTab }: FundProps) {
   const [selectedAmount, setSelectedAmount] = useState(30);
 
   const asset = "ETH";
-  const amounts = [1, 5, 10];
+  const amounts = [5, 10, 20];
 
   useEffect(() => {
     if (!address) return;
