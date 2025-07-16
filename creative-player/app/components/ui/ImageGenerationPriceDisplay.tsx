@@ -4,7 +4,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useImageGenerationPrice } from "@/hooks/useImageGenerationPrice";
+import { useImageGenerationPrice } from "@/app/hooks/useImageGenerationPrice";
 import { cn } from "@/lib/utils";
 
 interface ImageGenerationPriceDisplayProps {
