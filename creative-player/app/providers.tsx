@@ -2,12 +2,12 @@
 
 import { type ReactNode } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { base } from "wagmi/chains";
+import { base, baseSepolia } from "wagmi/chains";
 import { MiniKitProvider } from "@coinbase/onchainkit/minikit";
 import { coinbaseWallet } from "wagmi/connectors";
 
 const wagmiConfig = createConfig({
-  chains: [base],
+  chains: [base, baseSepolia], // Base mainnet first, then testnet for fallback
   connectors: [
     coinbaseWallet({
       appName: "creative-player",
@@ -16,7 +16,8 @@ const wagmiConfig = createConfig({
   ],
   ssr: true,
   transports: {
-    [base.id]: http(),
+    [base.id]: http(), // Base mainnet
+    [baseSepolia.id]: http(), // Base Sepolia testnet (fallback)
   },
 });
 
@@ -27,15 +28,6 @@ export function Providers(props: { children: ReactNode }) {
         projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
         apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
         chain={base}
-        notificationProxyUrl="/api/notify"
-        config={{
-          appearance: {
-            mode: "auto",
-            theme: "mini-app-theme",
-            name: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
-            logo: process.env.NEXT_PUBLIC_ICON_URL,
-          },
-        }}
       >
         {props.children}
       </MiniKitProvider>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useGetRequiredETH } from "@/lib/contracts";
 
 export interface ImageGenerationPrice {
   usdPrice: number;
@@ -11,32 +10,24 @@ export interface ImageGenerationPrice {
 
 export function useImageGenerationPrice() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const priceInCents = BigInt(2); // 2 cents per image
 
-  const {
-    data: ethRequired,
-    isError,
-    isLoading,
-  } = useGetRequiredETH(priceInCents);
-
-  const formatPrice = (wei: bigint): string => {
-    return (Number(wei) / 1e18).toFixed(9); // Convert wei to ETH with 9 decimal places
-  };
-
+  // Fixed pricing for both Livepeer and Gemini - x402 middleware handles the actual payment
   const price: ImageGenerationPrice = {
-    usdPrice: Number(priceInCents) / 100, // Convert cents to dollars
-    ethPrice: ethRequired ? formatPrice(ethRequired) : "0",
+    usdPrice: 0.05, // $0.05 USDC per image (both providers)
+    ethPrice: "0.000006187", // Approximate ETH equivalent at current rates
     lastUpdated,
-    isLoading,
-    error: isError ? "Failed to fetch price" : undefined,
+    isLoading: false,
+    error: undefined,
   };
 
-  // Update lastUpdated timestamp when price changes
+  // Update timestamp periodically
   useEffect(() => {
-    if (ethRequired) {
+    const interval = setInterval(() => {
       setLastUpdated(new Date());
-    }
-  }, [ethRequired]);
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return price;
 }

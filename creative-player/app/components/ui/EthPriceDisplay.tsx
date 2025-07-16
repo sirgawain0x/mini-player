@@ -28,7 +28,7 @@ const EthPriceDisplay = React.forwardRef<HTMLDivElement, EthPriceDisplayProps>(
     ref
   ) => {
     const [priceData, setPriceData] = useState<PriceData>({
-      usdPrice: 0.02,
+      usdPrice: 0.05,
       ethPrice: "0.000008547",
       lastUpdated: new Date(),
       change24h: 2.4,
@@ -46,11 +46,11 @@ const EthPriceDisplay = React.forwardRef<HTMLDivElement, EthPriceDisplayProps>(
 
       // Mock price calculation: 2 cents / current ETH price
       const mockEthPrice = 2340 + (Math.random() - 0.5) * 100; // Simulate ETH price fluctuation
-      const ethAmount = (0.02 / mockEthPrice).toFixed(9);
+      const ethAmount = (0.05 / mockEthPrice).toFixed(9);
       const change = (Math.random() - 0.5) * 10; // Random change between -5% and +5%
 
       const newPriceData: PriceData = {
-        usdPrice: 0.02,
+        usdPrice: 0.05,
         ethPrice: ethAmount,
         lastUpdated: new Date(),
         change24h: change,

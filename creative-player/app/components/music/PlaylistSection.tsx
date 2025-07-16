@@ -15,12 +15,19 @@ import {
   LifecycleStatus,
 } from "@coinbase/onchainkit/transaction";
 import { submitReferral } from "@divvi/referral-sdk";
-import { useAccount, useChainId, useWaitForTransactionReceipt } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  useWaitForTransactionReceipt,
+  useWalletClient,
+  useBalance,
+} from "wagmi";
 import {
   useGetRequiredETH,
   create2FactoryABI,
   getContractAddresses,
 } from "@/lib/contracts";
+import { wrapFetchWithPayment } from "x402-fetch";
 import {
   Music,
   Image as ImageIcon,
@@ -32,6 +39,7 @@ import {
   Loader2,
   Tag,
   FileText,
+  Wallet,
 } from "lucide-react";
 import { decodeEventLog } from "viem";
 import { type ContractFunctionParameters } from "viem";
@@ -62,32 +70,30 @@ export function PlaylistSection({
   const [saveState, setSaveState] = useState<
     "idle" | "pending" | "success" | "error"
   >("idle");
-  const [imagePaymentHash, setImagePaymentHash] = useState<
-    `0x${string}` | null
-  >(null);
   const [deploymentHash, setDeploymentHash] = useState<
     `0x${string}` | undefined
   >();
   const [savePlaylistCalls, setSavePlaylistCalls] = useState<
     PayableContractFunctionParameters[]
   >([]);
-
-  // Get ETH amount for $0.02 (2 cents) for image generation
-  const { data: imageGenerationCost, isLoading: isLoadingImageCost } =
-    useGetRequiredETH(BigInt(2));
+  const [paymentStatus, setPaymentStatus] = useState<string>("");
 
   // Get ETH amount for $0.10 (10 cents) for saving playlist
   const { data: savePlaylistCost, isLoading: isLoadingSaveCost } =
     useGetRequiredETH(BigInt(10));
 
-  const IMAGE_GENERATION_COST =
-    imageGenerationCost ?? BigInt("7916434121414350"); // Fallback to ~$0.02
-
   const SAVE_PLAYLIST_COST = savePlaylistCost ?? BigInt("39582170607071750"); // Fallback to ~$0.10
 
-  const COMPANY_WALLET_ADDRESS = "0x1Fde40a4046Eda0cA0539Dd6c77ABF8933B94260";
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const chainId = useChainId();
+
+  // Check USDC balance on Base network
+  const { data: usdcBalance } = useBalance({
+    address: address,
+    token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+    chainId: 8453, // Base mainnet
+  });
 
   const { data: receipt } = useWaitForTransactionReceipt({
     hash: deploymentHash,
@@ -108,59 +114,106 @@ export function PlaylistSection({
   }, []);
 
   const handleGenerateImage = useCallback(async () => {
-    if (!imagePrompt.trim() || !imagePaymentHash) return;
+    if (!imagePrompt.trim()) return;
+
+    if (!isConnected || !address) {
+      setImageGenerationError("Please connect your wallet first");
+      return;
+    }
+
+    if (!walletClient) {
+      setImageGenerationError("Wallet client not available");
+      return;
+    }
+
+    // Check if connected to Base network
+    if (walletClient.chain.id !== 8453) {
+      // Base mainnet chain ID
+      setImageGenerationError(
+        "Please switch to Base network to use x402 payments"
+      );
+      return;
+    }
+
+    // Check USDC balance (approximate cost check)
+    const requiredAmount = 0.05; // $0.05 USDC for Gemini
+    if (usdcBalance && parseFloat(usdcBalance.formatted) < requiredAmount) {
+      setImageGenerationError(
+        `Insufficient USDC balance. You need at least $${requiredAmount} USDC to generate an image.`
+      );
+      return;
+    }
 
     setLoadingImage(true);
     setImageGenerationError(null);
+    setPaymentStatus("Preparing payment...");
 
     try {
-      const response = await fetch("/api/gemini/text-to-image", {
+      // Use x402 payment for image generation
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fetchWithPayment = wrapFetchWithPayment(fetch, walletClient as any);
+
+      setPaymentStatus("Processing payment...");
+      console.log("Wallet connected:", isConnected, "Address:", address);
+      console.log("Wallet client:", walletClient);
+
+      const response = await fetchWithPayment("/api/gemini/text-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: imagePrompt,
-          paymentHash: imagePaymentHash,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate image with Gemini AI");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error:", response.status, errorData);
+
+        if (response.status === 402) {
+          throw new Error(
+            "Payment required. Please ensure your wallet is connected and has sufficient USDC balance."
+          );
+        }
+
+        throw new Error(
+          `Failed to generate image: ${response.status}${errorData.error ? ` - ${errorData.error}` : ""}`
+        );
       }
 
       const data = await response.json();
       if (data.imageUrl) {
         setCoverImage(data.imageUrl);
+        setPaymentStatus("Payment successful! Image generated.");
         showToast("Image generated successfully with Gemini AI!");
-        setImagePaymentHash(null);
+        setTimeout(() => setPaymentStatus(""), 3000);
       } else {
         throw new Error("No image URL returned");
       }
     } catch (error: unknown) {
-      setImageGenerationError(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate image. Please try again."
-      );
+      console.error("Image generation error:", error);
+
+      let errorMessage = "Failed to generate image. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+
+        // Check for specific x402 payment errors
+        if (error.message.includes("402")) {
+          errorMessage =
+            "Payment failed. Please ensure you have sufficient USDC balance on Base network.";
+        } else if (error.message.includes("insufficient")) {
+          errorMessage =
+            "Insufficient USDC balance. Please add funds to your wallet.";
+        } else if (error.message.includes("rejected")) {
+          errorMessage = "Payment was rejected. Please try again.";
+        }
+      }
+
+      setImageGenerationError(errorMessage);
+      setPaymentStatus("");
     } finally {
       setLoadingImage(false);
     }
-  }, [imagePrompt, imagePaymentHash, showToast]);
-
-  const handleImagePaymentStatus = useCallback(
-    async (status: LifecycleStatus) => {
-      if (status.statusName === "success") {
-        const txHash =
-          status.statusData.transactionReceipts[0]?.transactionHash;
-        if (txHash) {
-          setImagePaymentHash(txHash as `0x${string}`);
-          await handleGenerateImage();
-        }
-      } else if (status.statusName === "error") {
-        setImageGenerationError("Payment failed. Please try again.");
-      }
-    },
-    [handleGenerateImage]
-  );
+  }, [imagePrompt, showToast, isConnected, address, walletClient, usdcBalance]);
 
   const handleOnStatus = useCallback(
     async (status: LifecycleStatus) => {
@@ -282,16 +335,6 @@ export function PlaylistSection({
     tags,
     showToast,
   ]);
-
-  const imageGenerationCalls =
-    IMAGE_GENERATION_COST > BigInt(0)
-      ? [
-          {
-            to: COMPANY_WALLET_ADDRESS as `0x${string}`,
-            value: IMAGE_GENERATION_COST,
-          },
-        ]
-      : [];
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -437,46 +480,94 @@ export function PlaylistSection({
                       className="min-h-[100px] bg-[var(--app-card-bg)] border border-[var(--app-card-border)] focus:border-[var(--app-accent)] rounded-xl transition-all duration-300 resize-none"
                     />
 
+                    {/* Wallet connection check */}
+                    {!isConnected && (
+                      <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center justify-center gap-2 text-yellow-700">
+                          <Wallet className="w-5 h-5" />
+                          <span className="text-sm font-medium">
+                            Please connect your wallet to generate images
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Network check */}
+                    {isConnected &&
+                      walletClient &&
+                      walletClient.chain.id !== 8453 && (
+                        <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-center justify-center gap-2 text-red-700">
+                            <Wallet className="w-5 h-5" />
+                            <span className="text-sm font-medium">
+                              Please switch to Base network for x402 payments
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                    {/* USDC balance check */}
+                    {isConnected &&
+                      walletClient &&
+                      walletClient.chain.id === 8453 &&
+                      usdcBalance &&
+                      parseFloat(usdcBalance.formatted) < 0.05 && (
+                        <div className="text-center p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                          <div className="flex items-center justify-center gap-2 text-orange-700">
+                            <Wallet className="w-5 h-5" />
+                            <span className="text-sm font-medium">
+                              Insufficient USDC balance. You need at least $0.05
+                              USDC.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                     <div className="text-center mb-2">
                       <p className="text-sm font-medium text-[var(--app-foreground-muted)] flex items-center justify-center gap-1">
-                        Cost: $0.02 (
-                        {isLoadingImageCost
-                          ? "Loading..."
-                          : `${(Number(IMAGE_GENERATION_COST) / 1e18).toFixed(6)} ETH`}
-                        )
+                        Cost:{" "}
+                        <span className="text-green-600 font-bold">
+                          $0.05 USDC
+                        </span>{" "}
+                        on Base
                       </p>
                     </div>
 
-                    {!imagePaymentHash ? (
-                      <Transaction
-                        calls={imageGenerationCalls}
-                        onStatus={handleImagePaymentStatus}
-                      >
-                        <TransactionButton className="w-full bg-[var(--app-accent)] text-white" />
-                      </Transaction>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => handleGenerateImage()}
-                        disabled={loadingImage || !imagePrompt.trim()}
-                        className="w-full h-12 bg-[var(--app-accent)] hover:bg-[var(--app-accent)]/90 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group"
-                      >
-                        {loadingImage ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Generating Magic...
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                            Generate with Gemini AI
-                          </div>
-                        )}
-                      </Button>
+                    {paymentStatus && (
+                      <div className="text-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-700">{paymentStatus}</p>
+                      </div>
                     )}
 
+                    <Button
+                      type="button"
+                      onClick={handleGenerateImage}
+                      disabled={
+                        loadingImage ||
+                        !imagePrompt.trim() ||
+                        !isConnected ||
+                        !walletClient ||
+                        walletClient.chain.id !== 8453 ||
+                        (usdcBalance &&
+                          parseFloat(usdcBalance.formatted) < 0.05)
+                      }
+                      className="w-full h-12 bg-[var(--app-accent)] hover:bg-[var(--app-accent)]/90 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingImage ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Generating Magic...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Wand2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+                          Generate with Gemini AI
+                        </div>
+                      )}
+                    </Button>
+
                     {imageGenerationError && (
-                      <div className="text-red-500 text-sm text-center">
+                      <div className="text-red-500 text-sm text-center bg-red-50 border border-red-200 rounded-lg p-3">
                         {imageGenerationError}
                       </div>
                     )}

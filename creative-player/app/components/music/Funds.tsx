@@ -14,9 +14,10 @@ export function Fund({ setActiveTab }: FundProps) {
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState(30);
+  const [selectedAmount, setSelectedAmount] = useState(5);
+  const [selectedAsset, setSelectedAsset] = useState("ETH");
 
-  const asset = "ETH";
+  const assets = ["ETH", "USDC"];
   const amounts = [5, 10, 20];
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function Fund({ setActiveTab }: FundProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         address,
-        assets: [asset],
+        assets: [selectedAsset],
       }),
     })
       .then(async (res) => {
@@ -43,15 +44,31 @@ export function Fund({ setActiveTab }: FundProps) {
       .then((data) => setSessionToken(data.token))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [address, selectedAmount]);
+  }, [address, selectedAmount, selectedAsset]);
 
   const onrampUrl = sessionToken
-    ? `https://pay.coinbase.com/buy/select-asset?sessionToken=${sessionToken}&defaultNetwork=base&defaultAsset=${asset}&presetFiatAmount=${selectedAmount}&fiatCurrency=USD`
+    ? `https://pay.coinbase.com/buy/select-asset?sessionToken=${sessionToken}&defaultNetwork=base&defaultAsset=${selectedAsset}&presetFiatAmount=${selectedAmount}&fiatCurrency=USD`
     : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card title="Buy ETH on Base">
+      <Card title={`Buy ${selectedAsset} on Base`}>
+        {/* Asset Selection */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Select Asset</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {assets.map((asset) => (
+              <Button
+                key={asset}
+                variant={selectedAsset === asset ? "primary" : "outline"}
+                onClick={() => setSelectedAsset(asset)}
+              >
+                {asset}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {/* Amount Selection */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-3">Select Amount (USD)</h3>

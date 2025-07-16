@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import * as fs from "node:fs";
 import path from "path";
 
+// Configure runtime for Node.js APIs
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, paymentHash } = await request.json();
+    const { prompt } = await request.json();
 
     // Validate required fields
     if (!prompt) {
@@ -13,12 +16,6 @@ export async function POST(request: NextRequest) {
         { error: "Prompt is required" },
         { status: 400 }
       );
-    }
-
-    // Gemini uses API key billing, so payment hash is optional
-    // You can still track payments if provided for analytics/credits
-    if (paymentHash) {
-      console.log("Payment hash provided for Gemini generation:", paymentHash);
     }
 
     // Initialize Gemini AI
@@ -35,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Generate image using Gemini
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-preview-image-generation",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
@@ -90,7 +87,6 @@ export async function POST(request: NextRequest) {
       success: true,
       imageUrl,
       textResponse,
-      paymentHash,
     });
   } catch (error) {
     console.error("Gemini image generation error:", error);

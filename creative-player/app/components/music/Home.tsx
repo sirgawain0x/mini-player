@@ -8,6 +8,7 @@ import { Jukebox } from "./Jukebox";
 import { PlaylistSection } from "./PlaylistSection";
 import { PlaylistView } from "./PlaylistView";
 import { RecentTips } from "./RecentTips";
+import { UserBalances } from "./UserBalances";
 
 type HomeProps = {
   setActiveTab: (tab: string) => void;
@@ -49,6 +50,7 @@ export function Home({ setActiveTab }: HomeProps) {
           </Button>
         </div>
       </Card>
+      <UserBalances />
       <Jukebox
         onSongTipped={handleSongTipped}
         setSelectedSong={setSelectedSong}
