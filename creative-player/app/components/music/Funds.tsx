@@ -25,16 +25,12 @@ export function Fund({ setActiveTab }: FundProps) {
     setError(null);
     setSessionToken(null);
 
-    fetch("/api/onramp-session", {
+    fetch("/api/onramp/session-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         address,
         assets: [asset],
-        blockchains: ["base"],
-        fiatCurrency: "USD",
-        defaultPaymentMethod: "CRYPTO_ACCOUNT",
-        presetFiatAmount: selectedAmount,
       }),
     })
       .then(async (res) => {
@@ -44,7 +40,7 @@ export function Fund({ setActiveTab }: FundProps) {
         }
         return res.json();
       })
-      .then((data) => setSessionToken(data.sessionToken))
+      .then((data) => setSessionToken(data.token))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [address, selectedAmount]);
