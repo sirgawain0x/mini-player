@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 import * as fs from "node:fs";
 import path from "path";
@@ -18,11 +18,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Gemini AI
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_GENAI_API_KEY,
-    });
-
     if (!process.env.GOOGLE_GENAI_API_KEY) {
       return NextResponse.json(
         { error: "Gemini API key not configured" },
@@ -30,41 +25,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate image using Gemini
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
+    // Initialize Google GenAI SDK
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GOOGLE_GENAI_API_KEY,
+    });
+
+    // Generate image using the new SDK
+    const response = await ai.models.generateImages({
+      model: "imagen-3.0-generate-002", // Use the recommended model for image generation
+      prompt,
       config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
+        numberOfImages: 1,
+        outputMimeType: "image/png",
+        // You can add more config options here if needed
       },
     });
 
-    // Process the response
-    let imageBuffer: Buffer | null = null;
-    let textResponse = "";
-
-    if (!response.candidates || !response.candidates[0]?.content?.parts) {
-      return NextResponse.json(
-        { error: "Invalid response from Gemini" },
-        { status: 500 }
-      );
-    }
-
-    for (const part of response.candidates[0].content.parts) {
-      if (part.text) {
-        textResponse += part.text;
-      } else if (part.inlineData?.data) {
-        const imageData = part.inlineData.data;
-        imageBuffer = Buffer.from(imageData, "base64");
-      }
-    }
-
-    if (!imageBuffer) {
+    // Check for generated images
+    const imageObj = response?.generatedImages?.[0]?.image;
+    if (!imageObj?.imageBytes) {
       return NextResponse.json(
         { error: "No image generated" },
         { status: 500 }
       );
     }
+
+    // Decode base64 image
+    const imageBuffer = Buffer.from(imageObj.imageBytes, "base64");
 
     // Generate unique filename
     const timestamp = Date.now();
@@ -86,7 +73,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       imageUrl,
-      textResponse,
     });
   } catch (error) {
     console.error("Gemini image generation error:", error);

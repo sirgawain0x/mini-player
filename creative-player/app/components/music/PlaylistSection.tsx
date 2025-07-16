@@ -458,7 +458,7 @@ export function PlaylistSection({
                   <div className="p-2 bg-[var(--app-accent)] rounded-lg">
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
-                  AI Cover Art Generation with Gemini
+                  AI Cover Art Generation
                 </Label>
 
                 <div className="text-center mb-4">
