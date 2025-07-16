@@ -219,7 +219,7 @@ export function PlaylistSection({
     if (receipt) {
       const addresses = getContractAddresses(chainId);
       const eventAbi = create2FactoryABI.find(
-        (item) => item.type === "event" && item.name === "PlaylistCreated"
+        (item) => item.type === "event" && item.name === "PlaylistDeployed"
       );
 
       if (!eventAbi) return;

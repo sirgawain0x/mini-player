@@ -117,8 +117,18 @@ export async function POST(request: Request) {
       }
     );
 
-    const data = await response.json();
-    const sessionToken = data.token || data.data?.token;
+    let data: { token?: string; data?: { token?: string }; error?: string };
+    let sessionToken: string | undefined;
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+      sessionToken = data.token || data.data?.token;
+    } else {
+      const text = await response.text();
+      data = { error: text };
+    }
+
     if (!response.ok || !sessionToken) {
       return NextResponse.json(
         { error: data.error || "Failed to get session token" },
