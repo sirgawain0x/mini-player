@@ -1,4 +1,3 @@
-"use server";
 import { NextRequest, NextResponse } from "next/server";
 import { generateJWT } from "@/lib/session-token";
 
