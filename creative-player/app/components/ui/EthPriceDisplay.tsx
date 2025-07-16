@@ -63,7 +63,7 @@ const EthPriceDisplay = React.forwardRef<HTMLDivElement, EthPriceDisplayProps>(
 
       setIsLoading(false);
       setTimeout(() => setIsAnimating(false), 500);
-    }, []);
+    }, [onPriceUpdate]);
 
     // Auto-refresh functionality
     useEffect(() => {
