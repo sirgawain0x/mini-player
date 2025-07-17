@@ -12,8 +12,8 @@
     "lint:fix": "next lint --fix && prettier . --write"
   },
   "dependencies": {
-    "@coinbase/cdp-sdk": "^1.25.0",
-    "@coinbase/onchainkit": "latest",
+    "@coinbase/cdp-sdk": "^1.26.0",
+    "@coinbase/onchainkit": "0.38.17",
     "@coinbase/x402": "^0.4.1",
     "@divvi/referral-sdk": "^1.0.0",
     "@farcaster/frame-sdk": "^0.0.35",
