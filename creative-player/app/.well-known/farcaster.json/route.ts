@@ -26,9 +26,9 @@ export async function GET() {
       subtitle: process.env.NEXT_PUBLIC_APP_SUBTITLE,
       description: process.env.NEXT_PUBLIC_APP_DESCRIPTION,
       screenshotUrls: [
-        `${URL}/screenshot.png`,
-        `${URL}/screenshot-2.png`,
-        `${URL}/screenshot-3.png`,
+        "https://jukebox.creativeplatform.xyz/screenshot.png",
+        "https://jukebox.creativeplatform.xyz/screenshot-2.png",
+        "https://jukebox.creativeplatform.xyz/screenshot-3.png",
       ],
       iconUrl: process.env.NEXT_PUBLIC_APP_ICON,
       castShareUrl: `${URL}/share?text=Check+out+this+music+app`,
