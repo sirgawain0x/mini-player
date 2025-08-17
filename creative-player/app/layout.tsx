@@ -35,6 +35,13 @@ export async function generateMetadata(): Promise<Metadata> {
       ...Object.fromEntries(
         miniappMetaTags.map(tag => [tag.name, tag.content])
       ),
+      // Frame-specific meta tags for validation
+      "fc:frame": "vNext",
+      "fc:frame:image": `${url.origin}/screenshot.png`,
+      "fc:frame:button:1": "Open Jukebox",
+      "fc:frame:post_url": `${url.origin}/api/frame`,
+      "fc:frame:state": "jukebox",
+      "fc:frame:input:text": "false",
     },
     openGraph: {
       url: url,
@@ -42,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "On-chain music. Tip artists directly. AI-powered playlists.",
       images: [
         {
-          url: `${url}screenshot.png`,
+          url: `${url.origin}/screenshot.png`,
           width: 1200,
           height: 630,
           alt: "Genesis Jukebox",
@@ -59,12 +66,15 @@ export async function generateMetadata(): Promise<Metadata> {
       description: "On-chain music. Tip artists directly. AI-powered playlists.",
       images: [
         {
-          url: `${url}screenshot.png`,
+          url: `${url.origin}/screenshot.png`,
           width: 1200,
           height: 630,
           alt: "Genesis Jukebox",
         },
       ],
+    },
+    alternates: {
+      canonical: url,
     },
   };
 }
