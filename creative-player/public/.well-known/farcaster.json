@@ -23,6 +23,7 @@
       "webhookUrl": "https://jukebox.creativeplatform.xyz/api/webhook",
      "primaryCategory": "music",
       "tags": ["music", "tip", "playlist", "curate"],
+      "buttonTitle": "Discover Music",
       "heroImageUrl": "https://jukebox.creativeplatform.xyz/hero.png",
       "tagline": "Your Web3 Jukebox.",
       "ogTitle": "Genesis Jukebox",
