@@ -36,7 +36,7 @@ export async function GET() {
       splashBackgroundColor: process.env.NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR,
       homeUrl: URL,
       webhookUrl: `${URL}/api/webhook`,
-      primaryCategory: process.env.NEXT_PUBLIC_APP_PRIMARY_CATEGORY,
+     primaryCategory: "music",
       tags: ["music", "tip", "playlist", "curate"],
       heroImageUrl: process.env.NEXT_PUBLIC_APP_HERO_IMAGE,
       tagline: process.env.NEXT_PUBLIC_APP_TAGLINE,
