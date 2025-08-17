@@ -17,9 +17,9 @@ export interface MiniappEmbed {
   version: string;
   title: string;
   description: string;
-  image: string;
-  actionUrl: string;
-  splashPage?: string;
+  imageUrl: string;
+  homeUrl: string;
+  splashImageUrl?: string;
   mentions?: MiniappUser[];
   [key: string]: any; // Allow for future extensions
 }
@@ -32,11 +32,11 @@ The default Mini App Embed configuration is defined in `types/miniapp.ts`:
 ```typescript
 export const DEFAULT_MINIAPP_EMBED: MiniappEmbed = {
   version: "1.0",
-  title: "Creative Player",
-  description: "A creative way to interact with onchain music.",
-  image: "/screenshot.png",
-  actionUrl: "/",
-  splashPage: "/splash.png",
+  title: "Genesis Jukebox",
+  description: "On-chain music. Tip artists directly. AI-powered playlists.",
+  imageUrl: "/screenshot.png",
+  homeUrl: "/",
+  splashImageUrl: "/splash.png",
 };
 ```
 
@@ -61,8 +61,8 @@ import { generateMiniappEmbedMetaTags } from "./utils/miniapp-embed";
 const metaTags = generateMiniappEmbedMetaTags({
   title: "Custom Title",
   description: "Custom description",
-  image: "/custom-image.png",
-  actionUrl: "/custom-page",
+  imageUrl: "/custom-image.png",
+  homeUrl: "/custom-page",
 });
 ```
 
@@ -76,8 +76,8 @@ import { createMiniappEmbed } from "./utils/miniapp-embed";
 const customEmbed = createMiniappEmbed({
   title: "Custom Title",
   description: "Custom description",
-  image: "/custom-image.png",
-  actionUrl: "/custom-page",
+  imageUrl: "/custom-image.png",
+  homeUrl: "/custom-page",
 });
 ```
 
@@ -107,8 +107,8 @@ function MyPage() {
   const customEmbed = {
     title: "Page Title",
     description: "Page description",
-    image: "/page-image.png",
-    actionUrl: "/my-page",
+    imageUrl: "/page-image.png",
+    homeUrl: "/my-page",
   };
 
   return (
@@ -164,8 +164,8 @@ export default function MusicPage({ params }: { params: { id: string } }) {
   const musicEmbed = {
     title: `Music Track ${params.id}`,
     description: "Listen to this amazing track",
-    image: `/music/${params.id}/cover.png`,
-    actionUrl: `/music/${params.id}`,
+    imageUrl: `/music/${params.id}/cover.png`,
+    homeUrl: `/music/${params.id}`,
   };
 
   return (
@@ -185,8 +185,8 @@ Include user mentions in the embed:
 const embedWithMentions = {
   title: "Collaborative Playlist",
   description: "Check out this playlist by @user1 and @user2",
-  image: "/playlist-cover.png",
-  actionUrl: "/playlist/123",
+  imageUrl: "/playlist-cover.png",
+  homeUrl: "/playlist/123",
   mentions: [
     {
       fid: 12345,

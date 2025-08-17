@@ -22,9 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const miniappMetaTags = generateMiniappEmbedMetaTags({
     title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
     description: "On-chain music. Tip artists directly. AI-powered playlists.",
-    image: "/screenshot.png",
-    actionUrl: "/",
-    splashPage: "/splash.png",
+    imageUrl: "/screenshot.png",
+    homeUrl: "/",
+    splashImageUrl: "/splash.png",
   });
 
   return {

@@ -9,9 +9,9 @@ export interface MiniappEmbed {
   version: string;
   title: string;
   description: string;
-  image: string;
-  actionUrl: string;
-  splashPage?: string;
+  imageUrl: string;
+  homeUrl: string;
+  splashImageUrl?: string;
   mentions?: MiniappUser[];
   [key: string]: any; // Allow for future extensions
 }
@@ -28,7 +28,7 @@ export const DEFAULT_MINIAPP_EMBED: MiniappEmbed = {
   version: "1.0",
   title: "Genesis Jukebox",
   description: "On-chain music. Tip artists directly. AI-powered playlists.",
-  image: "/screenshot.png",
-  actionUrl: "/",
-  splashPage: "/splash.png",
+  imageUrl: "/screenshot.png",
+  homeUrl: "/",
+  splashImageUrl: "/splash.png",
 };

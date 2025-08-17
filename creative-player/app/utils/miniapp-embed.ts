@@ -13,21 +13,37 @@ export function generateMiniappEmbedMetaTags(
   // Get the base URL from environment or use the actual domain
   const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://jukebox.creativeplatform.xyz';
   
+  // Helper function to ensure URL is absolute and valid
+  const makeAbsoluteUrl = (url: string): string => {
+    if (url.startsWith('http')) {
+      return url;
+    }
+    // Remove leading slash if baseUrl already ends with one
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const absoluteUrl = `${cleanBaseUrl}/${cleanUrl}`;
+    
+    // Validate URL format
+    try {
+      new URL(absoluteUrl);
+      return absoluteUrl;
+    } catch (error) {
+      console.error('Invalid URL generated:', absoluteUrl, error);
+      // Fallback to a safe URL
+      return `${cleanBaseUrl}/screenshot.png`;
+    }
+  };
+  
   // Ensure all URLs are absolute
   const embedWithAbsoluteUrls = {
     ...finalEmbed,
-    image: finalEmbed.image.startsWith('http') 
-      ? finalEmbed.image 
-      : `${baseUrl}${finalEmbed.image}`,
-    actionUrl: finalEmbed.actionUrl.startsWith('http')
-      ? finalEmbed.actionUrl
-      : `${baseUrl}${finalEmbed.actionUrl}`,
-    splashPage: finalEmbed.splashPage 
-      ? (finalEmbed.splashPage.startsWith('http')
-          ? finalEmbed.splashPage
-          : `${baseUrl}${finalEmbed.splashPage}`)
-      : undefined,
+    imageUrl: makeAbsoluteUrl(finalEmbed.imageUrl),
+    homeUrl: makeAbsoluteUrl(finalEmbed.homeUrl),
+    splashImageUrl: finalEmbed.splashImageUrl ? makeAbsoluteUrl(finalEmbed.splashImageUrl) : undefined,
   };
+
+  // Debug logging
+  console.log('Mini App Embed generated:', embedWithAbsoluteUrls);
 
   const embedJson = JSON.stringify(embedWithAbsoluteUrls);
 
@@ -78,12 +94,12 @@ export function validateMiniappEmbed(embed: MiniappEmbed): {
     errors.push("Description is required");
   }
 
-  if (!embed.image) {
+  if (!embed.imageUrl) {
     errors.push("Image URL is required");
   }
 
-  if (!embed.actionUrl) {
-    errors.push("Action URL is required");
+  if (!embed.homeUrl) {
+    errors.push("Home URL is required");
   }
 
   return {
