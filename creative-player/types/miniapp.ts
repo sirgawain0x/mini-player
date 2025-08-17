@@ -29,6 +29,6 @@ export const DEFAULT_MINIAPP_EMBED: MiniappEmbed = {
   title: "Genesis Jukebox",
   description: "On-chain music. Tip artists directly. AI-powered playlists.",
   imageUrl: "/screenshot.png",
-  homeUrl: "/",
+  homeUrl: "https://jukebox.creativeplatform.xyz",
   splashImageUrl: "/splash.png",
 };

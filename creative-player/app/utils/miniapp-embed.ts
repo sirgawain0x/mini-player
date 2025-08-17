@@ -11,7 +11,7 @@ export function generateMiniappEmbedMetaTags(
   const finalEmbed = { ...DEFAULT_MINIAPP_EMBED, ...embed };
   
   // Get the base URL from environment or use the actual domain
-  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://jukebox.creativeplatform.xyz';
+  const baseUrl = (process.env.NEXT_PUBLIC_URL || 'https://jukebox.creativeplatform.xyz').replace(/\/$/, '');
   
   // Helper function to ensure URL is absolute and valid
   const makeAbsoluteUrl = (url: string): string => {
@@ -38,7 +38,7 @@ export function generateMiniappEmbedMetaTags(
   const embedWithAbsoluteUrls = {
     ...finalEmbed,
     imageUrl: makeAbsoluteUrl(finalEmbed.imageUrl),
-    homeUrl: makeAbsoluteUrl(finalEmbed.homeUrl),
+    homeUrl: baseUrl, // Use base URL directly for homeUrl to avoid trailing slash
     splashImageUrl: finalEmbed.splashImageUrl ? makeAbsoluteUrl(finalEmbed.splashImageUrl) : undefined,
   };
 

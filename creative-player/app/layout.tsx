@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
     description: "On-chain music. Tip artists directly. AI-powered playlists.",
     imageUrl: "/screenshot.png",
-    homeUrl: "/",
+    homeUrl: url.origin,
     splashImageUrl: "/splash.png",
   });
 
