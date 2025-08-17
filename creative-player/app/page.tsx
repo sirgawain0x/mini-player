@@ -26,6 +26,7 @@ import { Features } from "./components/music/Features";
 import { Fund } from "./components/music/Funds";
 import { handleSplashScreen } from "./utils/farcaster";
 
+
 // Loading skeleton component
 function LoadingSkeleton() {
   return (

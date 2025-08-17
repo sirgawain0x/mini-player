@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Inter } from "next/font/google";
+import { generateMiniappEmbedMetaTags } from "./utils/miniapp-embed";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,10 +18,24 @@ export async function generateMetadata(): Promise<Metadata> {
     ? new URL(process.env.NEXT_PUBLIC_URL)
     : new URL("https://creativeplatform.xyz");
 
+  // Generate Mini App Embed meta tags
+  const miniappMetaTags = generateMiniappEmbedMetaTags({
+    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Creative Player",
+    description: "A creative way to interact with onchain music.",
+    image: "/screenshot.png",
+    actionUrl: "/",
+    splashPage: "/splash.png",
+  });
+
   return {
     title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
     description: "A creative way to interact with onchain music.",
     metadataBase: url,
+    other: {
+      ...Object.fromEntries(
+        miniappMetaTags.map(tag => [tag.name, tag.content])
+      ),
+    },
     openGraph: {
       url: url,
       title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
