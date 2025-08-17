@@ -26,8 +26,8 @@ export interface MiniappCast {
 // Default Mini App Embed configuration
 export const DEFAULT_MINIAPP_EMBED: MiniappEmbed = {
   version: "1.0",
-  title: "Creative Player",
-  description: "A creative way to interact with onchain music.",
+  title: "Genesis Jukebox",
+  description: "On-chain music. Tip artists directly. AI-powered playlists.",
   image: "/screenshot.png",
   actionUrl: "/",
   splashPage: "/splash.png",

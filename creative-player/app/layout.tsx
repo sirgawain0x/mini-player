@@ -16,20 +16,20 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   const url = process.env.NEXT_PUBLIC_URL
     ? new URL(process.env.NEXT_PUBLIC_URL)
-    : new URL("https://creativeplatform.xyz");
+    : new URL("https://jukebox.creativeplatform.xyz");
 
   // Generate Mini App Embed meta tags
   const miniappMetaTags = generateMiniappEmbedMetaTags({
-    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Creative Player",
-    description: "A creative way to interact with onchain music.",
+    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
+    description: "On-chain music. Tip artists directly. AI-powered playlists.",
     image: "/screenshot.png",
     actionUrl: "/",
     splashPage: "/splash.png",
   });
 
   return {
-    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
-    description: "A creative way to interact with onchain music.",
+    title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
+    description: "On-chain music. Tip artists directly. AI-powered playlists.",
     metadataBase: url,
     other: {
       ...Object.fromEntries(
@@ -38,31 +38,31 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       url: url,
-      title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
-      description: "A creative way to interact with onchain music.",
+      title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
+      description: "On-chain music. Tip artists directly. AI-powered playlists.",
       images: [
         {
           url: `${url}screenshot.png`,
           width: 1200,
           height: 630,
-          alt: "Creative Player",
+          alt: "Genesis Jukebox",
         },
       ],
-      siteName: "Creative Player",
+      siteName: "Genesis Jukebox",
       type: "website",
       locale: "en_US",
     },
     twitter: {
       card: "summary_large_image",
       creator: "@love",
-      title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
-      description: "A creative way to interact with onchain music.",
+      title: process.env.NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME || "Genesis Jukebox",
+      description: "On-chain music. Tip artists directly. AI-powered playlists.",
       images: [
         {
           url: `${url}screenshot.png`,
           width: 1200,
           height: 630,
-          alt: "Creative Player",
+          alt: "Genesis Jukebox",
         },
       ],
     },

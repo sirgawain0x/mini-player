@@ -10,17 +10,26 @@ export function generateMiniappEmbedMetaTags(
 ): Array<{ name: string; content: string }> {
   const finalEmbed = { ...DEFAULT_MINIAPP_EMBED, ...embed };
   
-  // Ensure image URL is absolute
-  const imageUrl = finalEmbed.image.startsWith('http') 
-    ? finalEmbed.image 
-    : `${process.env.NEXT_PUBLIC_URL || 'https://creativeplatform.xyz'}${finalEmbed.image}`;
+  // Get the base URL from environment or use the actual domain
+  const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://jukebox.creativeplatform.xyz';
   
-  const embedWithAbsoluteImage = {
+  // Ensure all URLs are absolute
+  const embedWithAbsoluteUrls = {
     ...finalEmbed,
-    image: imageUrl,
+    image: finalEmbed.image.startsWith('http') 
+      ? finalEmbed.image 
+      : `${baseUrl}${finalEmbed.image}`,
+    actionUrl: finalEmbed.actionUrl.startsWith('http')
+      ? finalEmbed.actionUrl
+      : `${baseUrl}${finalEmbed.actionUrl}`,
+    splashPage: finalEmbed.splashPage 
+      ? (finalEmbed.splashPage.startsWith('http')
+          ? finalEmbed.splashPage
+          : `${baseUrl}${finalEmbed.splashPage}`)
+      : undefined,
   };
 
-  const embedJson = JSON.stringify(embedWithAbsoluteImage);
+  const embedJson = JSON.stringify(embedWithAbsoluteUrls);
 
   return [
     {

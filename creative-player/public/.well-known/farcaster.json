@@ -4,7 +4,7 @@
     "payload": "eyJkb21haW4iOiJqdWtlYm91bnQud2ViIn0",
     "signature": "eyJmaWQiOjc5MzUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg3RGYyQzk0MTJiRDY3NDk3ZmVhRWY3M0M2Zjc4YUY2NzFGYWM4Njc0In0"
   },
-    "frame": {
+    "miniapp": {
         "version": "1",
       "name": "Genesis Jukebox",
       "subtitle": "Your Web3 Jukebox.",
